@@ -1,27 +1,57 @@
 # ClockEvent TODO
 
-## Finished
+## Phase 2: iCal Fetcher + Parser
 
-- [X] Design document
-- [X] README.md
+### Medium
+- [ ] Create fetcher.js (XMLHttpRequest fetch for iCal URLs, merge + sort + filter)
 
-## In Progress
+### Hard
+- [ ] Create icalparser.js (parse VEVENT, DTSTART/DTEND, SUMMARY, UID, all-day events)
+- [ ] Handle RRULE recurring event expansion within date window
+- [ ] Handle VTIMEZONE / UTC offset conversion to local time
 
-- [ ] Clock + calendar widget that looks like phone next-events display
+### Verification
+- [ ] Test with real Google Calendar iCal URL, verify events in console
 
-## Up Next
+## Phase 3: Event List UI
 
-- [ ] Project scaffolding (metadata.json, directory structure, basic main.qml)
-- [ ] Clock section (time + date display, 12h/24h support)
-- [ ] iCal fetcher (HTTPS fetch, parse VEVENT, handle RRULE recurring events)
-- [ ] Event list UI (ListView with month headers, date badges, event blocks)
-- [ ] Configuration dialog (calendars tab, appearance tab, general tab)
-- [ ] Click-to-open events in browser
-- [ ] Add-event button
-- [ ] Scrolling and resize behavior
-- [ ] Auto-refresh on interval
-- [ ] Testing with real Google Calendar iCal feeds
-- [ ] Packaging and install instructions
+### Easy
+- [ ] Create MonthHeader.qml (month name divider + add button)
+
+### Medium
+- [ ] Create EventList.qml (ListView with month sections, scrollable)
+- [ ] Create EventRow.qml (date badge left, event block right, same-date grouping)
+
+### Verification
+- [ ] Test event display with month headers in plasmoidviewer
+
+## Phase 4: Configuration Dialog
+
+### Easy
+- [ ] Create ConfigAppearance.qml (12h/24h toggle, days ahead spinner)
+- [ ] Create ConfigGeneral.qml (refresh interval spinner)
+
+### Medium
+- [ ] Create ConfigCalendars.qml (add/remove iCal URLs with labels, enable/disable toggle)
+
+### Verification
+- [ ] Test config dialog, verify settings persist and apply
+
+## Phase 5: Polish + Packaging
+
+### Easy
+- [ ] Wire [+] button to open Google Calendar new event page in browser
+- [ ] Add right-click manual refresh action
+- [ ] Update README with install instructions
+
+### Medium
+- [ ] Click event to open in browser (Google Calendar edit URL or day view fallback)
+- [ ] Resize behavior (widget adapts, list scrolls)
+- [ ] Auto-refresh on configurable interval
+
+### Verification
+- [ ] End-to-end test with real iCal feeds on desktop
+- [ ] Package and install via kpackagetool6
 
 ## Future / Out of Scope
 
@@ -29,3 +59,11 @@
 - [ ] Per-calendar / per-event color coding
 - [ ] CalDAV support for non-Google calendars
 - [ ] Desktop notifications for upcoming events
+
+## Finished
+
+- [X] Design document
+- [X] README.md
+- [X] Implementation plan
+- [X] Git repo initialized
+- [X] Phase 1: Scaffolding + Clock (metadata.json, config, main.qml, ClockSection.qml)

@@ -1,0 +1,21 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "libra00@gmail.com",
+                "Name": "Steve Pittman"
+            }
+        ],
+        "Category": "Date and Time",
+        "Description": "Clock and upcoming Google Calendar events widget",
+        "Icon": "view-calendar-upcoming-events",
+        "Id": "org.kde.plasma.clockevent",
+        "License": "GPL-2.0+",
+        "Name": "ClockEvent",
+        "Version": "0.1",
+        "Website": "https://github.com/skpittman/ClockEvent"
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-MainScript": "ui/main.qml"
+}
