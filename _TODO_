@@ -1,0 +1,31 @@
+# ClockEvent TODO
+
+## Finished
+
+- [X] Design document
+- [X] README.md
+
+## In Progress
+
+- [ ] Clock + calendar widget that looks like phone next-events display
+
+## Up Next
+
+- [ ] Project scaffolding (metadata.json, directory structure, basic main.qml)
+- [ ] Clock section (time + date display, 12h/24h support)
+- [ ] iCal fetcher (HTTPS fetch, parse VEVENT, handle RRULE recurring events)
+- [ ] Event list UI (ListView with month headers, date badges, event blocks)
+- [ ] Configuration dialog (calendars tab, appearance tab, general tab)
+- [ ] Click-to-open events in browser
+- [ ] Add-event button
+- [ ] Scrolling and resize behavior
+- [ ] Auto-refresh on interval
+- [ ] Testing with real Google Calendar iCal feeds
+- [ ] Packaging and install instructions
+
+## Future / Out of Scope
+
+- [ ] Google Calendar API integration (OAuth) for event colors
+- [ ] Per-calendar / per-event color coding
+- [ ] CalDAV support for non-Google calendars
+- [ ] Desktop notifications for upcoming events
