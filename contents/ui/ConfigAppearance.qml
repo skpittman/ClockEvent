@@ -12,6 +12,8 @@ KCM.SimpleKCM {
     property int cfg_daysAheadDefault
     property alias cfg_showTimezone: showTimezoneCheckBox.checked
     property bool cfg_showTimezoneDefault
+    property alias cfg_windowOpacity: opacitySlider.value
+    property double cfg_windowOpacityDefault
     property string cfg_calendarSources
     property string cfg_calendarSourcesDefault
     property int cfg_refreshIntervalMinutes
@@ -36,6 +38,25 @@ KCM.SimpleKCM {
             from: 1
             to: 365
             value: 30
+        }
+
+        RowLayout {
+            Kirigami.FormData.label: i18n("Window opacity:")
+            spacing: Kirigami.Units.smallSpacing
+
+            QQC2.Slider {
+                id: opacitySlider
+                from: 0.2
+                to: 1.0
+                live: true
+                value: cfg_windowOpacity
+                Layout.fillWidth: true
+            }
+
+            QQC2.Label {
+                text: Math.round(opacitySlider.value * 100) + "%"
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+            }
         }
     }
 }

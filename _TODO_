@@ -23,6 +23,30 @@ Run `~/dev/ClockEvent/test.sh` to launch plasmoidviewer, then:
 
 To get an iCal URL: Google Calendar > Settings > (click a calendar) > "Secret address in iCal format" > Copy
 
+## Last Session (2026-03-02)
+
+Worked on scrollbar, timezone, month header, opacity, drag-to-move. Status:
+
+- [X] Scrollbar: 6px wide, custom styled, centered in 9px right gap — WORKS
+- [X] Overscroll bounce: fixed with boundsBehavior: StopAtBounds — WORKS
+- [X] Month header in toolbar: shows when inline header scrolls off — WORKS (minor delay on transition)
+- [ ] Timezone vertical text beside AM/PM: shows "GMT-0500" instead of "EST" — BROKEN
+      - Qt6 JS `Date.toString()` puts full name in parens e.g. "(Eastern Standard Time)" not "(EST)"
+      - Current code tries to extract initials but isn't being hit — needs debug
+      - Column width set to gridUnit*0.8, letter size gridUnit*0.7
+- [ ] Window opacity slider: config entry added, slider in Appearance tab — BROKEN
+      - Logs show: `ConfigCalendars does not have a property called cfg_windowOpacity`
+        (Plasma injects cfg_ props into ALL config pages, so ConfigCalendars.qml needs the property too)
+      - No Window.window debug output seen — the Binding/Connections may not fire
+      - Content `opacity:` on fullRepresentation Item also not visibly working
+      - Scrollbar has binding loop on "position" (line 83/103 of EventList.qml)
+- [ ] Drag-to-move via clock area MouseArea — BROKEN
+      - No "ClockEvent DRAG" debug output in logs — onPressed never fires
+      - MouseArea wraps ClockSection but events aren't reaching it
+      - Likely: ClockSection's Labels consume mouse events before MouseArea gets them
+      - Try: propagateComposedEvents, or put MouseArea ON TOP (z:1) with mouse.accepted=false for non-drags
+- [ ] Remove debug console.log lines from main.qml before next real commit
+
 ## Polish + Packaging
 
 ### Easy
@@ -55,3 +79,6 @@ To get an iCal URL: Google Calendar > Settings > (click a calendar) > "Secret ad
 - [X] Phase 3: Event List UI (EventList.qml, EventRow.qml, MonthHeader.qml)
 - [X] Phase 4: Configuration Dialog (ConfigCalendars.qml, ConfigAppearance.qml, ConfigGeneral.qml)
 - [X] Phase 5: Click actions (event opens browser, [+] opens new event page)
+- [X] Scrollbar styling and positioning (6px custom pill, 9px right gap)
+- [X] Overscroll bounce fix
+- [X] Sticky month header in toolbar (shows on scroll)
