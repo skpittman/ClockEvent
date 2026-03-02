@@ -1,51 +1,35 @@
 # ClockEvent TODO
 
-## Phase 2: iCal Fetcher + Parser
+## Testing (next session)
 
-### Medium
-- [ ] Create fetcher.js (XMLHttpRequest fetch for iCal URLs, merge + sort + filter)
+Run `~/dev/ClockEvent/test.sh` to launch plasmoidviewer, then:
 
-### Hard
-- [ ] Create icalparser.js (parse VEVENT, DTSTART/DTEND, SUMMARY, UID, all-day events)
-- [ ] Handle RRULE recurring event expansion within date window
-- [ ] Handle VTIMEZONE / UTC offset conversion to local time
+- [ ] Verify clock still displays correctly (time + date)
+- [ ] Right-click > Configure opens settings dialog
+- [ ] Calendars tab: "Add Calendar" button works, can type label and paste iCal URL
+- [ ] Calendars tab: enable/disable checkbox works, delete button works
+- [ ] Calendars tab: hit Apply, verify events load (check logs/test.log for "Loaded X events")
+- [ ] Appearance tab: 12h/24h toggle works, days ahead spinner works
+- [ ] General tab: refresh interval spinner works
+- [ ] Events display with month headers (e.g., "March 2026")
+- [ ] Date badges show on left (day-of-week + day number), grouped for same-date events
+- [ ] Event blocks show title (bold) + time range
+- [ ] All-day events show "All day" instead of time range
+- [ ] Scrolling works when many events are loaded
+- [ ] Clicking an event opens Google Calendar day view in browser
+- [ ] Clicking [+] button opens Google Calendar new event page in browser
+- [ ] Recurring events (weekly meetings, etc.) expand correctly
+- [ ] Check logs/test.log for any QML errors or fetch failures
 
-### Verification
-- [ ] Test with real Google Calendar iCal URL, verify events in console
+To get an iCal URL: Google Calendar > Settings > (click a calendar) > "Secret address in iCal format" > Copy
 
-## Phase 3: Event List UI
-
-### Easy
-- [ ] Create MonthHeader.qml (month name divider + add button)
-
-### Medium
-- [ ] Create EventList.qml (ListView with month sections, scrollable)
-- [ ] Create EventRow.qml (date badge left, event block right, same-date grouping)
-
-### Verification
-- [ ] Test event display with month headers in plasmoidviewer
-
-## Phase 4: Configuration Dialog
+## Polish + Packaging
 
 ### Easy
-- [ ] Create ConfigAppearance.qml (12h/24h toggle, days ahead spinner)
-- [ ] Create ConfigGeneral.qml (refresh interval spinner)
-
-### Medium
-- [ ] Create ConfigCalendars.qml (add/remove iCal URLs with labels, enable/disable toggle)
-
-### Verification
-- [ ] Test config dialog, verify settings persist and apply
-
-## Phase 5: Polish + Packaging
-
-### Easy
-- [ ] Wire [+] button to open Google Calendar new event page in browser
 - [ ] Add right-click manual refresh action
 - [ ] Update README with install instructions
 
 ### Medium
-- [ ] Click event to open in browser (Google Calendar edit URL or day view fallback)
 - [ ] Resize behavior (widget adapts, list scrolls)
 - [ ] Auto-refresh on configurable interval
 
@@ -67,3 +51,7 @@
 - [X] Implementation plan
 - [X] Git repo initialized
 - [X] Phase 1: Scaffolding + Clock (metadata.json, config, main.qml, ClockSection.qml)
+- [X] Phase 2: iCal Fetcher + Parser (icalparser.js, fetcher.js, wired into main.qml)
+- [X] Phase 3: Event List UI (EventList.qml, EventRow.qml, MonthHeader.qml)
+- [X] Phase 4: Configuration Dialog (ConfigCalendars.qml, ConfigAppearance.qml, ConfigGeneral.qml)
+- [X] Phase 5: Click actions (event opens browser, [+] opens new event page)

@@ -7,6 +7,7 @@ ColumnLayout {
     id: clockRoot
 
     property bool use24HourClock: false
+    property bool showTimezone: false
 
     spacing: Kirigami.Units.smallSpacing
 
@@ -53,7 +54,15 @@ ColumnLayout {
     PlasmaComponents.Label {
         Layout.alignment: Qt.AlignHCenter
         text: Qt.formatDate(clockRoot.currentTime, "ddd MMM d")
-        font.pixelSize: Kirigami.Units.gridUnit * 1.0
+        font.pixelSize: Kirigami.Units.gridUnit * 1.5
+        color: Kirigami.Theme.disabledTextColor
+    }
+
+    PlasmaComponents.Label {
+        Layout.alignment: Qt.AlignHCenter
+        visible: clockRoot.showTimezone
+        text: Intl.DateTimeFormat().resolvedOptions().timeZone
+        font.pixelSize: Kirigami.Units.gridUnit * 0.8
         color: Kirigami.Theme.disabledTextColor
     }
 }
