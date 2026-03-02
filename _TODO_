@@ -1,28 +1,5 @@
 # ClockEvent TODO
 
-## Testing (next session)
-
-Run `~/dev/ClockEvent/test.sh` to launch plasmoidviewer, then:
-
-- [ ] Verify clock still displays correctly (time + date)
-- [ ] Right-click > Configure opens settings dialog
-- [ ] Calendars tab: "Add Calendar" button works, can type label and paste iCal URL
-- [ ] Calendars tab: enable/disable checkbox works, delete button works
-- [ ] Calendars tab: hit Apply, verify events load (check logs/test.log for "Loaded X events")
-- [ ] Appearance tab: 12h/24h toggle works, days ahead spinner works
-- [ ] General tab: refresh interval spinner works
-- [ ] Events display with month headers (e.g., "March 2026")
-- [ ] Date badges show on left (day-of-week + day number), grouped for same-date events
-- [ ] Event blocks show title (bold) + time range
-- [ ] All-day events show "All day" instead of time range
-- [ ] Scrolling works when many events are loaded
-- [ ] Clicking an event opens Google Calendar day view in browser
-- [ ] Clicking [+] button opens Google Calendar new event page in browser
-- [ ] Recurring events (weekly meetings, etc.) expand correctly
-- [ ] Check logs/test.log for any QML errors or fetch failures
-
-To get an iCal URL: Google Calendar > Settings > (click a calendar) > "Secret address in iCal format" > Copy
-
 ## Last Session (2026-03-02)
 
 Worked on scrollbar, timezone, month header, opacity, drag-to-move. Status:
@@ -46,6 +23,29 @@ Worked on scrollbar, timezone, month header, opacity, drag-to-move. Status:
       - Likely: ClockSection's Labels consume mouse events before MouseArea gets them
       - Try: propagateComposedEvents, or put MouseArea ON TOP (z:1) with mouse.accepted=false for non-drags
 - [ ] Remove debug console.log lines from main.qml before next real commit
+
+## Testing Checklist
+
+Run `~/dev/ClockEvent/dtest.sh` to deploy, then:
+
+- [ ] Verify clock still displays correctly (time + date)
+- [ ] Right-click > Configure opens settings dialog
+- [ ] Calendars tab: "Add Calendar" button works, can type label and paste iCal URL
+- [ ] Calendars tab: enable/disable checkbox works, delete button works
+- [ ] Calendars tab: hit Apply, verify events load (check logs/test.log for "Loaded X events")
+- [ ] Appearance tab: 12h/24h toggle works, days ahead spinner works
+- [ ] General tab: refresh interval spinner works
+- [ ] Events display with month headers (e.g., "March 2026")
+- [ ] Date badges show on left (day-of-week + day number), grouped for same-date events
+- [ ] Event blocks show title (bold) + time range
+- [ ] All-day events show "All day" instead of time range
+- [ ] Scrolling works when many events are loaded
+- [ ] Clicking an event opens Google Calendar day view in browser
+- [ ] Clicking [+] button opens Google Calendar new event page in browser
+- [ ] Recurring events (weekly meetings, etc.) expand correctly
+- [ ] Check logs/test.log for any QML errors or fetch failures
+
+To get an iCal URL: Google Calendar > Settings > (click a calendar) > "Secret address in iCal format" > Copy
 
 ## Polish + Packaging
 
