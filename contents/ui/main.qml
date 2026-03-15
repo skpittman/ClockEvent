@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Window 2.15
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents
@@ -121,72 +120,15 @@ PlasmoidItem {
     }
 
     fullRepresentation: Item {
-        // Apply window opacity from settings
-        opacity: Plasmoid.configuration.windowOpacity
-
-        // Also try to set the actual window opacity for transparent background
-        property var _win: Window.window
-        on_WinChanged: {
-            console.log("ClockEvent: Window.window changed:", _win, "type:", typeof _win)
-            if (_win) {
-                console.log("ClockEvent: Window properties - x:", _win.x, "y:", _win.y, "opacity:", _win.opacity)
-                _win.opacity = Plasmoid.configuration.windowOpacity
-            }
-        }
-        Connections {
-            target: Plasmoid.configuration
-            function onWindowOpacityChanged() {
-                var win = Window.window
-                console.log("ClockEvent: opacity config changed to", Plasmoid.configuration.windowOpacity, "win:", win)
-                if (win) win.opacity = Plasmoid.configuration.windowOpacity
-            }
-        }
-
         ColumnLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.largeSpacing
 
-            // Clock area — also acts as drag handle to move the widget
-            MouseArea {
+            ClockSection {
+                id: clockSection
                 Layout.fillWidth: true
-                Layout.preferredHeight: clockSection.implicitHeight
-                Layout.alignment: Qt.AlignHCenter
-                cursorShape: Qt.OpenHandCursor
-
-                property real startMouseX
-                property real startMouseY
-                property real startWinX
-                property real startWinY
-
-                onPressed: function(mouse) {
-                    cursorShape = Qt.ClosedHandCursor
-                    var win = Window.window
-                    console.log("ClockEvent DRAG: pressed, win:", win)
-                    if (win) {
-                        console.log("ClockEvent DRAG: win.x:", win.x, "win.y:", win.y, "type:", win.toString())
-                        var global = mapToGlobal(mouse.x, mouse.y)
-                        startMouseX = global.x
-                        startMouseY = global.y
-                        startWinX = win.x
-                        startWinY = win.y
-                    }
-                }
-                onReleased: cursorShape = Qt.OpenHandCursor
-                onPositionChanged: function(mouse) {
-                    var win = Window.window
-                    if (win && pressed) {
-                        var global = mapToGlobal(mouse.x, mouse.y)
-                        win.x = startWinX + (global.x - startMouseX)
-                        win.y = startWinY + (global.y - startMouseY)
-                    }
-                }
-
-                ClockSection {
-                    id: clockSection
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    use24HourClock: Plasmoid.configuration.use24HourClock
-                    showTimezone: Plasmoid.configuration.showTimezone
-                }
+                use24HourClock: Plasmoid.configuration.use24HourClock
+                showTimezone: Plasmoid.configuration.showTimezone
             }
 
             // Toolbar row
@@ -195,7 +137,6 @@ PlasmoidItem {
                 spacing: Kirigami.Units.smallSpacing
 
                 PlasmaComponents.Label {
-                    visible: eventList.sectionHeaderScrolledOff
                     text: eventList.currentSection
                     font.pixelSize: Kirigami.Units.gridUnit * 1.2
                     font.weight: Font.Bold

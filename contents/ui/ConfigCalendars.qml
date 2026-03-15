@@ -17,6 +17,8 @@ KCM.SimpleKCM {
     property int cfg_refreshIntervalMinutesDefault
     property bool cfg_showTimezone
     property bool cfg_showTimezoneDefault
+    property double cfg_windowOpacity
+    property double cfg_windowOpacityDefault
 
     // Default colors for new calendars (cycle through these)
     readonly property var defaultColors: [

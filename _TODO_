@@ -1,28 +1,48 @@
 # ClockEvent TODO
 
-## Last Session (2026-03-02)
+## Next Project: An interactive map that shows all US interventions in foreign countries by era and type, where you can mouse over each affected country and get both a timeline of US interventions and a link to wikipedia or another reputable source backing up each claim.
 
-Worked on scrollbar, timezone, month header, opacity, drag-to-move. Status:
+## Last Session (2026-03-10)
 
-- [X] Scrollbar: 6px wide, custom styled, centered in 9px right gap — WORKS
-- [X] Overscroll bounce: fixed with boundsBehavior: StopAtBounds — WORKS
-- [X] Month header in toolbar: shows when inline header scrolls off — WORKS (minor delay on transition)
-- [ ] Timezone vertical text beside AM/PM: shows "GMT-0500" instead of "EST" — BROKEN
-      - Qt6 JS `Date.toString()` puts full name in parens e.g. "(Eastern Standard Time)" not "(EST)"
-      - Current code tries to extract initials but isn't being hit — needs debug
-      - Column width set to gridUnit*0.8, letter size gridUnit*0.7
-- [ ] Window opacity slider: config entry added, slider in Appearance tab — BROKEN
-      - Logs show: `ConfigCalendars does not have a property called cfg_windowOpacity`
-        (Plasma injects cfg_ props into ALL config pages, so ConfigCalendars.qml needs the property too)
-      - No Window.window debug output seen — the Binding/Connections may not fire
-      - Content `opacity:` on fullRepresentation Item also not visibly working
-      - Scrollbar has binding loop on "position" (line 83/103 of EventList.qml)
-- [ ] Drag-to-move via clock area MouseArea — BROKEN
-      - No "ClockEvent DRAG" debug output in logs — onPressed never fires
-      - MouseArea wraps ClockSection but events aren't reaching it
-      - Likely: ClockSection's Labels consume mouse events before MouseArea gets them
-      - Try: propagateComposedEvents, or put MouseArea ON TOP (z:1) with mouse.accepted=false for non-drags
-- [ ] Remove debug console.log lines from main.qml before next real commit
+Bugs to fix:
+- [ ] Clock showing 24-hour format with AM/PM (e.g. "0:11 AM" instead of "12:11 AM") — can't verify until midnight
+
+Fixed this session:
+- [X] Phantom events — rewrote RRULE expansion (proper week-by-week with INTERVAL, BYDAY, monthly nth-day support)
+- [X] DST — occurrence dates now constructed fresh with explicit h/m/s instead of mutating Date with setDate()
+- [X] Clock scales to widget width (font size computed to fill available width)
+- [X] Removed dead DragHandler/startSystemMove code (desktop applets use Plasma's built-in long-press drag)
+
+In progress:
+
+## Session (2026-03-03)
+
+Progress made:
+- [X] Timezone: vertical letters beside AM/PM — WORKS
+      - Split time into two labels ("9:53 " + "AM") so we can anchor tz column to ampmLabel
+      - Used TextMetrics.tightBoundingRect.height (=34px) for actual glyph height
+      - Position: y = ampmLabel.y + (ampmLabel.height - glyphHeight) / 2
+      - Each letter: font.pixelSize = letterHeight * 1.1, bold
+      - Key learning: PlasmaComponents.Label baseline property returns QQuickAnchorLine()
+        (unusable), and Qt.font({...}) returns undefined in Qt6. Set font props directly.
+- [X] Month header: always visible in toolbar, updates on scroll — WORKS
+      - Removed inline section delegates entirely
+      - Toolbar always shows eventList.currentSection
+      - updateSection() uses indexAt(); returns early on idx < 0 to prevent flicker
+- [X] Dropped window opacity feature (not needed)
+
+In progress — pick up here:
+
+- [ ] Drag-to-move: BREAKTHROUGH — onPressed DOES fire now!
+      - Previous "never fires" was likely caused by the Qt.font() error breaking the component
+      - Window.window returns DesktopView (a real window object)
+      - Current code has debug console.warn lines — remove after confirming drag works
+      - FenceWidget approach (for reference): does NOT use Window.window, instead directly
+        sets fence.x/fence.y using mapToItem(fence.parent, ...) delta calculations
+      - NEXT STEP: just test if the current Window.window approach actually moves the widget
+        now that onPressed fires. If DesktopView.x/y can't be set, switch to FenceWidget's
+        approach (mapToItem + direct x/y on the applet item)
+      - Debug lines still in main.qml onPressed — clean up after confirming
 
 ## Testing Checklist
 
@@ -82,3 +102,6 @@ To get an iCal URL: Google Calendar > Settings > (click a calendar) > "Secret ad
 - [X] Scrollbar styling and positioning (6px custom pill, 9px right gap)
 - [X] Overscroll bounce fix
 - [X] Sticky month header in toolbar (shows on scroll)
+- [X] Timezone vertical letters beside AM/PM (split labels + TextMetrics)
+- [X] Month header always in toolbar (no inline section delegates)
+- [X] Window opacity feature dropped

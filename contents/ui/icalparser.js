@@ -116,90 +116,270 @@ function expandRRule(rule, dtStart, dtEnd, exDates, windowStart, windowEnd, maxO
     if (!maxOccurrences) maxOccurrences = 500
     var occurrences = []
     var duration = dtEnd.getTime() - dtStart.getTime()
-    var current = new Date(dtStart.getTime())
     var count = 0
 
     var endBound = windowEnd
     if (rule.until && rule.until < endBound) endBound = rule.until
 
-    // Build a set of excluded dates for fast lookup
+    // Build a set of excluded dates for fast lookup (compare date only for robustness)
     var exDateSet = {}
     if (exDates) {
         for (var e = 0; e < exDates.length; e++) {
-            exDateSet[exDates[e].getTime()] = true
+            var ex = exDates[e]
+            exDateSet[ex.getFullYear() + "-" + ex.getMonth() + "-" + ex.getDate()] = true
         }
     }
 
-    while (current <= endBound && count < maxOccurrences) {
-        if (rule.count !== undefined && count >= rule.count) break
+    function isExcluded(d) {
+        return exDateSet[d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate()] === true
+    }
 
-        var matches = true
+    // For weekly recurrence with BYDAY, we need to track week boundaries
+    // to correctly apply INTERVAL (e.g., every 2nd week)
+    var startDay = dtStart.getDay()
+    var startTime = { h: dtStart.getHours(), m: dtStart.getMinutes(), s: dtStart.getSeconds() }
 
-        // BYDAY filter
-        if (rule.byDay) {
-            var dow = current.getDay()
-            var found = false
-            for (var d = 0; d < rule.byDay.length; d++) {
-                // Strip numeric prefix (e.g., "2TU" -> "TU") for simple matching
-                var dayStr = rule.byDay[d].replace(/^-?\d+/, "")
-                if (dayMap[dayStr] === dow) { found = true; break }
-            }
-            if (!found) matches = false
-        }
-
-        // BYMONTH filter
-        if (rule.byMonth && matches) {
-            var mon = current.getMonth() + 1
-            if (rule.byMonth.indexOf(mon) === -1) matches = false
-        }
-
-        // BYMONTHDAY filter
-        if (rule.byMonthDay && matches) {
-            var mday = current.getDate()
-            if (rule.byMonthDay.indexOf(mday) === -1) matches = false
-        }
-
-        if (matches && !exDateSet[current.getTime()]) {
-            if (current >= windowStart) {
-                var occEnd = new Date(current.getTime() + duration)
-                occurrences.push({ start: new Date(current.getTime()), end: occEnd })
-            }
-            count++
-        }
-
-        // Advance to next candidate
-        switch (rule.freq) {
-            case "DAILY":
-                current.setDate(current.getDate() + (rule.byDay ? 1 : rule.interval))
-                break
-            case "WEEKLY":
-                if (rule.byDay) {
-                    current.setDate(current.getDate() + 1)
-                } else {
-                    current.setDate(current.getDate() + 7 * rule.interval)
-                }
-                break
-            case "MONTHLY":
-                if (!rule.byDay && !rule.byMonthDay) {
-                    current.setMonth(current.getMonth() + rule.interval)
-                } else {
-                    current.setDate(current.getDate() + 1)
-                }
-                break
-            case "YEARLY":
-                if (!rule.byDay && !rule.byMonth && !rule.byMonthDay) {
-                    current.setFullYear(current.getFullYear() + rule.interval)
-                } else {
-                    current.setDate(current.getDate() + 1)
-                }
-                break
-            default:
-                // Unknown freq, bail
-                return occurrences
-        }
+    switch (rule.freq) {
+        case "DAILY":
+            expandDaily(rule, dtStart, startTime, duration, endBound, windowStart, exDateSet, occurrences, maxOccurrences)
+            break
+        case "WEEKLY":
+            expandWeekly(rule, dtStart, startTime, duration, endBound, windowStart, exDateSet, occurrences, maxOccurrences)
+            break
+        case "MONTHLY":
+            expandMonthly(rule, dtStart, startTime, duration, endBound, windowStart, exDateSet, occurrences, maxOccurrences)
+            break
+        case "YEARLY":
+            expandYearly(rule, dtStart, startTime, duration, endBound, windowStart, exDateSet, occurrences, maxOccurrences)
+            break
     }
 
     return occurrences
+}
+
+function makeOccDate(year, month, day, startTime) {
+    return new Date(year, month, day, startTime.h, startTime.m, startTime.s)
+}
+
+function isExcludedDate(d, exDateSet) {
+    return exDateSet[d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate()] === true
+}
+
+function addOccurrence(occ, d, duration, windowStart, exDateSet, occurrences) {
+    if (d > windowStart || (d.getTime() + duration) > windowStart.getTime()) {
+        if (!isExcludedDate(d, exDateSet)) {
+            occurrences.push({ start: new Date(d.getTime()), end: new Date(d.getTime() + duration) })
+        }
+    }
+}
+
+function expandDaily(rule, dtStart, startTime, duration, endBound, windowStart, exDateSet, occurrences, max) {
+    var count = 0
+    var cur = new Date(dtStart.getTime())
+    while (cur <= endBound && count < max) {
+        if (rule.count !== undefined && count >= rule.count) break
+        addOccurrence(null, cur, duration, windowStart, exDateSet, occurrences)
+        count++
+        // Advance by interval days, preserving time-of-day
+        var next = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + rule.interval,
+                            startTime.h, startTime.m, startTime.s)
+        cur = next
+    }
+}
+
+function expandWeekly(rule, dtStart, startTime, duration, endBound, windowStart, exDateSet, occurrences, max) {
+    var count = 0
+
+    // Which days of the week does this event occur?
+    var daysOfWeek
+    if (rule.byDay) {
+        daysOfWeek = []
+        for (var d = 0; d < rule.byDay.length; d++) {
+            var dayStr = rule.byDay[d].replace(/^-?\d+/, "")
+            if (dayMap[dayStr] !== undefined) daysOfWeek.push(dayMap[dayStr])
+        }
+        daysOfWeek.sort()
+    } else {
+        // No BYDAY: recur on the same day-of-week as dtStart
+        daysOfWeek = [dtStart.getDay()]
+    }
+
+    // Start from the week of dtStart
+    // Find the Monday (or WKST) of dtStart's week
+    var wkstDay = rule.wkst ? dayMap[rule.wkst] : 1 // default Monday
+    if (wkstDay === undefined) wkstDay = 1
+
+    // Walk week by week, applying interval
+    var weekStart = new Date(dtStart.getFullYear(), dtStart.getMonth(), dtStart.getDate())
+    // Rewind to the start-of-week containing dtStart
+    var daysSinceWkst = (weekStart.getDay() - wkstDay + 7) % 7
+    weekStart.setDate(weekStart.getDate() - daysSinceWkst)
+
+    while (weekStart <= endBound && count < max) {
+        if (rule.count !== undefined && count >= rule.count) break
+
+        for (var i = 0; i < daysOfWeek.length; i++) {
+            if (rule.count !== undefined && count >= rule.count) break
+
+            var dow = daysOfWeek[i]
+            var daysFromWkst = (dow - wkstDay + 7) % 7
+            var occDate = makeOccDate(weekStart.getFullYear(), weekStart.getMonth(),
+                                      weekStart.getDate() + daysFromWkst, startTime)
+
+            if (occDate > endBound) break
+            if (occDate < dtStart) continue
+
+            addOccurrence(null, occDate, duration, windowStart, exDateSet, occurrences)
+            count++
+        }
+
+        // Advance by interval weeks
+        weekStart = new Date(weekStart.getFullYear(), weekStart.getMonth(),
+                             weekStart.getDate() + 7 * rule.interval)
+    }
+}
+
+function expandMonthly(rule, dtStart, startTime, duration, endBound, windowStart, exDateSet, occurrences, max) {
+    var count = 0
+    var monthOffset = 0
+
+    while (count < max) {
+        if (rule.count !== undefined && count >= rule.count) break
+
+        var year = dtStart.getFullYear()
+        var month = dtStart.getMonth() + monthOffset
+
+        // Normalize month/year
+        year += Math.floor(month / 12)
+        month = month % 12
+        if (month < 0) { month += 12; year-- }
+
+        if (rule.byMonthDay) {
+            for (var i = 0; i < rule.byMonthDay.length; i++) {
+                if (rule.count !== undefined && count >= rule.count) break
+                var day = rule.byMonthDay[i]
+                if (day < 0) {
+                    // Negative: count from end of month
+                    var lastDay = new Date(year, month + 1, 0).getDate()
+                    day = lastDay + day + 1
+                }
+                if (day < 1) continue
+                var d = makeOccDate(year, month, day, startTime)
+                if (d > endBound) return
+                if (d >= dtStart) {
+                    addOccurrence(null, d, duration, windowStart, exDateSet, occurrences)
+                    count++
+                }
+            }
+        } else if (rule.byDay) {
+            // BYDAY in monthly context: e.g., "2TU" = 2nd Tuesday
+            for (var i = 0; i < rule.byDay.length; i++) {
+                if (rule.count !== undefined && count >= rule.count) break
+                var match = rule.byDay[i].match(/^(-?\d+)?([A-Z]{2})$/)
+                if (!match) continue
+                var nth = match[1] ? parseInt(match[1]) : 0
+                var dow = dayMap[match[2]]
+                if (dow === undefined) continue
+
+                var dates = nthDayOfMonth(year, month, dow, nth)
+                for (var j = 0; j < dates.length; j++) {
+                    if (rule.count !== undefined && count >= rule.count) break
+                    var d = makeOccDate(year, month, dates[j], startTime)
+                    if (d > endBound) return
+                    if (d >= dtStart) {
+                        addOccurrence(null, d, duration, windowStart, exDateSet, occurrences)
+                        count++
+                    }
+                }
+            }
+        } else {
+            // No BYDAY/BYMONTHDAY: same day-of-month as dtStart
+            var day = dtStart.getDate()
+            var lastDay = new Date(year, month + 1, 0).getDate()
+            if (day <= lastDay) {
+                var d = makeOccDate(year, month, day, startTime)
+                if (d > endBound) return
+                if (d >= dtStart) {
+                    addOccurrence(null, d, duration, windowStart, exDateSet, occurrences)
+                    count++
+                }
+            }
+        }
+
+        monthOffset += rule.interval
+    }
+}
+
+// Find the Nth occurrence of a day-of-week in a month
+// nth > 0: 1st, 2nd, etc. nth < 0: last, 2nd-to-last, etc. nth == 0: all occurrences
+function nthDayOfMonth(year, month, dow, nth) {
+    var lastDay = new Date(year, month + 1, 0).getDate()
+    var matches = []
+    for (var d = 1; d <= lastDay; d++) {
+        if (new Date(year, month, d).getDay() === dow) matches.push(d)
+    }
+    if (nth === 0) return matches
+    if (nth > 0) return nth <= matches.length ? [matches[nth - 1]] : []
+    // negative
+    var idx = matches.length + nth
+    return idx >= 0 ? [matches[idx]] : []
+}
+
+function expandYearly(rule, dtStart, startTime, duration, endBound, windowStart, exDateSet, occurrences, max) {
+    var count = 0
+    var yearOffset = 0
+
+    while (count < max) {
+        if (rule.count !== undefined && count >= rule.count) break
+        var year = dtStart.getFullYear() + yearOffset
+
+        var months = rule.byMonth ? rule.byMonth.map(function(m) { return m - 1 }) : [dtStart.getMonth()]
+
+        for (var mi = 0; mi < months.length; mi++) {
+            if (rule.count !== undefined && count >= rule.count) break
+            var month = months[mi]
+
+            if (rule.byMonthDay) {
+                for (var i = 0; i < rule.byMonthDay.length; i++) {
+                    if (rule.count !== undefined && count >= rule.count) break
+                    var d = makeOccDate(year, month, rule.byMonthDay[i], startTime)
+                    if (d > endBound) return
+                    if (d >= dtStart) {
+                        addOccurrence(null, d, duration, windowStart, exDateSet, occurrences)
+                        count++
+                    }
+                }
+            } else if (rule.byDay) {
+                for (var i = 0; i < rule.byDay.length; i++) {
+                    if (rule.count !== undefined && count >= rule.count) break
+                    var match = rule.byDay[i].match(/^(-?\d+)?([A-Z]{2})$/)
+                    if (!match) continue
+                    var nth = match[1] ? parseInt(match[1]) : 0
+                    var dow = dayMap[match[2]]
+                    if (dow === undefined) continue
+                    var dates = nthDayOfMonth(year, month, dow, nth)
+                    for (var j = 0; j < dates.length; j++) {
+                        if (rule.count !== undefined && count >= rule.count) break
+                        var d = makeOccDate(year, month, dates[j], startTime)
+                        if (d > endBound) return
+                        if (d >= dtStart) {
+                            addOccurrence(null, d, duration, windowStart, exDateSet, occurrences)
+                            count++
+                        }
+                    }
+                }
+            } else {
+                var d = makeOccDate(year, month, dtStart.getDate(), startTime)
+                if (d > endBound) return
+                if (d >= dtStart) {
+                    addOccurrence(null, d, duration, windowStart, exDateSet, occurrences)
+                    count++
+                }
+            }
+        }
+
+        yearOffset += rule.interval
+    }
 }
 
 // Extract a property value and its parameters from a line

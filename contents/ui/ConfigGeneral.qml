@@ -16,6 +16,8 @@ KCM.SimpleKCM {
     property int cfg_daysAheadDefault
     property bool cfg_showTimezone
     property bool cfg_showTimezoneDefault
+    property double cfg_windowOpacity
+    property double cfg_windowOpacityDefault
 
     Kirigami.FormLayout {
 

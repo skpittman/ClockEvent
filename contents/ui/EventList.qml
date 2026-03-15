@@ -9,40 +9,21 @@ Item {
 
     property alias sourceModel: listView.model
     property bool use24HourClock: false
-    // The month/year section visible at the top of the scroll area
-    property string currentSection: _stableSection
-    property string _stableSection: ""
-    // True when the user has scrolled enough that the inline header is off-screen
-    property bool sectionHeaderScrolledOff: listView.contentY > Kirigami.Units.gridUnit * 1.5
+    property string currentSection: ""
 
-    // Update section with a short delay to prevent flicker during transitions
-    Timer {
-        id: sectionTimer
-        interval: 16
-        onTriggered: {
-            if (listView.count === 0) { eventListRoot._stableSection = ""; return }
-            // Probe just past any section header at the top
-            var probeY = listView.contentY + 1
-            var idx = listView.indexAt(listView.contentX, probeY)
-            if (idx < 0) {
-                // Might be over a section header — try further down
-                idx = listView.indexAt(listView.contentX, probeY + Kirigami.Units.gridUnit * 1.5)
-            }
-            if (idx < 0) idx = 0
-            var item = listView.model.get(idx)
-            if (item) eventListRoot._stableSection = item.monthSection
-        }
+    function updateSection() {
+        if (listView.count === 0) { currentSection = ""; return }
+        var idx = listView.indexAt(listView.contentX, listView.contentY + 1)
+        if (idx < 0) return
+        var item = listView.model.get(idx)
+        if (item) currentSection = item.monthSection
     }
     Connections {
         target: listView
-        function onContentYChanged() { sectionTimer.restart() }
+        function onContentYChanged() { eventListRoot.updateSection() }
+        function onCountChanged() { eventListRoot.updateSection() }
     }
-    Component.onCompleted: {
-        if (listView.count > 0) {
-            var item = listView.model.get(0)
-            if (item) _stableSection = item.monthSection
-        }
-    }
+    Component.onCompleted: updateSection()
 
     signal eventClicked(string uid, real startTime)
 
@@ -63,13 +44,7 @@ Item {
         // Disable the built-in scrollbar; we use our own
         QQC2.ScrollBar.vertical: QQC2.ScrollBar { width: 0; policy: QQC2.ScrollBar.AlwaysOff }
 
-        // Section by month/year string (inline only, sticky header is in toolbar)
         section.property: "monthSection"
-        section.delegate: MonthHeader {
-            width: listView.width
-            monthName: section
-            required property string section
-        }
 
         delegate: EventRow {
             width: listView.width
@@ -124,7 +99,13 @@ Item {
                  : Qt.rgba(1, 1, 1, 0.2)
         }
         size: listView.visibleArea.heightRatio
-        position: listView.visibleArea.yPosition
+
+        Binding on position {
+            value: listView.visibleArea.yPosition
+            when: !scrollBar.active
+            restoreMode: Binding.RestoreNone
+        }
+
         onPositionChanged: {
             if (active) {
                 listView.contentY = position * listView.contentHeight
